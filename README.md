@@ -10,6 +10,8 @@ Study Planner is a focused task management app for organizing study goals. The c
 - Search tasks by title or note
 - Filter all, active, and completed tasks
 - Assign a due date and priority
+- Highlight overdue active tasks
+- Confirm destructive deletions
 - Progress summary with completion percentage
 - Browser-local persistence with `localStorage`
 - Express health endpoint and automated smoke test
@@ -46,7 +48,7 @@ Run the same smoke test used by GitHub Actions:
 npm test
 ```
 
-The test starts the server on an isolated local port and verifies that `/api/health` returns the expected application status.
+The test starts the server on an isolated local port, verifies that `/api/health` returns the expected application status, and confirms that the frontend loads.
 
 ## Data and limitations
 

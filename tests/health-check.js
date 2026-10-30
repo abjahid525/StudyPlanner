@@ -32,7 +32,12 @@ const run = async () => {
       const response = await fetch(`http://127.0.0.1:${port}/api/health`);
       const body = await response.json();
       if (response.ok && body.status === 'ok' && body.app === 'study-planner') {
-        console.log('Study Planner health check passed.');
+        const pageResponse = await fetch(`http://127.0.0.1:${port}/`);
+        const page = await pageResponse.text();
+        if (!pageResponse.ok || !page.includes('<title>Study Planner</title>')) {
+          throw new Error('Study Planner frontend did not load correctly.');
+        }
+        console.log('Study Planner health and frontend checks passed.');
         stopServer();
         return;
       }

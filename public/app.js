@@ -27,7 +27,19 @@ const elements = {
 function loadTasks() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    return Array.isArray(saved) ? saved : [];
+    if (!Array.isArray(saved)) return [];
+    return saved
+      .filter((task) => task && typeof task.id === 'string' && typeof task.title === 'string')
+      .map((task) => ({
+        id: task.id,
+        title: task.title.trim(),
+        description: typeof task.description === 'string' ? task.description : '',
+        dueDate: typeof task.dueDate === 'string' ? task.dueDate : '',
+        priority: ['low', 'medium', 'high'].includes(task.priority) ? task.priority : 'medium',
+        completed: task.completed === true,
+        createdAt: typeof task.createdAt === 'string' ? task.createdAt : new Date().toISOString()
+      }))
+      .filter((task) => task.title);
   } catch {
     return [];
   }
@@ -43,7 +55,17 @@ function createId() {
 
 function formatDueDate(value) {
   if (!value) return 'No due date';
-  return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(`${value}T00:00:00`));
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime())
+    ? 'Invalid due date'
+    : new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(date);
+}
+
+function isOverdue(task) {
+  if (!task.dueDate || task.completed) return false;
+  const today = new Date();
+  const dueDate = new Date(`${task.dueDate}T23:59:59`);
+  return !Number.isNaN(dueDate.getTime()) && dueDate < today;
 }
 
 function visibleTasks() {
@@ -82,7 +104,7 @@ function render() {
 
 function renderTask(task) {
   const item = document.createElement('article');
-  item.className = `task-item${task.completed ? ' completed' : ''}`;
+  item.className = `task-item${task.completed ? ' completed' : ''}${isOverdue(task) ? ' overdue' : ''}`;
   item.dataset.id = task.id;
 
   const check = document.createElement('button');
@@ -110,7 +132,7 @@ function renderTask(task) {
   priority.className = `priority priority-${task.priority}`;
   priority.textContent = task.priority;
   const due = document.createElement('span');
-  due.textContent = formatDueDate(task.dueDate);
+  due.textContent = isOverdue(task) ? `${formatDueDate(task.dueDate)} · overdue` : formatDueDate(task.dueDate);
   meta.append(priority, due);
   main.append(meta);
 
@@ -151,7 +173,11 @@ function showToast(message) {
 elements.form.addEventListener('submit', (event) => {
   event.preventDefault();
   const title = elements.title.value.trim();
-  if (!title) return;
+  if (!title) {
+    elements.title.focus();
+    showToast('Add a task title first');
+    return;
+  }
   const existingId = elements.taskId.value;
   if (existingId) {
     const task = state.tasks.find((item) => item.id === existingId);
@@ -197,6 +223,7 @@ elements.taskList.addEventListener('click', (event) => {
     return;
   }
   if (action === 'delete') {
+    if (!window.confirm(`Delete "${task.title}"?`)) return;
     state.tasks = state.tasks.filter((entry) => entry.id !== task.id);
     saveTasks();
     render();
