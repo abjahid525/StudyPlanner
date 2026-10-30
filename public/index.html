@@ -17,7 +17,10 @@
         <span class="brand-mark">SP</span>
         <span>Study Planner</span>
       </a>
-      <span class="storage-note"><span class="status-dot"></span>Saved locally</span>
+      <div class="topbar-actions">
+        <span class="storage-note"><span class="status-dot"></span>Saved locally</span>
+        <button id="theme-toggle" class="theme-button" type="button" aria-label="Switch to dark theme">Dark mode</button>
+      </div>
     </header>
 
     <section class="hero">
@@ -49,6 +52,14 @@
         <span class="stat-label">Progress</span>
         <strong id="progress-value">0%</strong>
         <div class="progress-track"><span id="progress-bar"></span></div>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Today</span>
+        <strong id="today-count">0</strong>
+      </article>
+      <article class="stat-card warning-card">
+        <span class="stat-label">Overdue</span>
+        <strong id="overdue-count">0</strong>
       </article>
     </section>
 
@@ -83,14 +94,41 @@
             <option value="high">High</option>
           </select>
         </label>
+        <label class="field">
+          <span>Subject</span>
+          <select id="task-subject">
+            <option value="general" selected>General</option>
+            <option value="dsa">DSA</option>
+            <option value="web">Web development</option>
+            <option value="database">Database</option>
+            <option value="programming">Programming</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
         <button class="primary-button" type="submit"><span id="submit-label">Add task</span><span aria-hidden="true">+</span></button>
       </form>
 
       <div class="list-toolbar">
-        <div class="filter-tabs" role="tablist" aria-label="Task status filters">
+        <div class="toolbar-controls">
+          <div class="filter-tabs" role="tablist" aria-label="Task status filters">
           <button class="filter-tab active" data-filter="all" type="button" role="tab" aria-selected="true">All <span id="all-count">0</span></button>
           <button class="filter-tab" data-filter="active" type="button" role="tab" aria-selected="false">Active <span id="active-count">0</span></button>
           <button class="filter-tab" data-filter="completed" type="button" role="tab" aria-selected="false">Completed <span id="done-count">0</span></button>
+          </div>
+          <select id="subject-filter" class="toolbar-select" aria-label="Filter by subject">
+            <option value="all">All subjects</option>
+            <option value="dsa">DSA</option>
+            <option value="web">Web development</option>
+            <option value="database">Database</option>
+            <option value="programming">Programming</option>
+            <option value="general">General</option>
+            <option value="other">Other</option>
+          </select>
+          <select id="sort-select" class="toolbar-select" aria-label="Sort tasks">
+            <option value="created">Newest first</option>
+            <option value="due">Due date</option>
+            <option value="priority">Priority</option>
+          </select>
         </div>
         <label class="search-box">
           <span aria-hidden="true">⌕</span>
@@ -103,6 +141,10 @@
         <div class="empty-icon">✦</div>
         <h3 id="empty-title">No tasks yet</h3>
         <p id="empty-copy">Add your first study task to get started.</p>
+      </div>
+      <div class="data-actions">
+        <button id="export-tasks" class="text-button" type="button">Export backup</button>
+        <label class="text-button import-button">Import backup<input id="import-tasks" type="file" accept="application/json" /></label>
       </div>
     </section>
   </main>

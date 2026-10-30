@@ -10,9 +10,14 @@ Study Planner is a focused task management app for organizing study goals. The c
 - Search tasks by title or note
 - Filter all, active, and completed tasks
 - Assign a due date and priority
+- Organize tasks by subject
+- Sort by creation date, due date, or priority
 - Highlight overdue active tasks
 - Confirm destructive deletions
 - Progress summary with completion percentage
+- Track today's and overdue task counts
+- Export and import JSON backups
+- Switch between light and dark themes
 - Browser-local persistence with `localStorage`
 - Express health endpoint and automated smoke test
 
@@ -52,4 +57,4 @@ The test starts the server on an isolated local port, verifies that `/api/health
 
 ## Data and limitations
 
-Tasks are stored only in the current browser's `localStorage`. They are not synchronized between browsers or devices, and clearing browser data removes them. A future version can add authenticated accounts and a database-backed API.
+Tasks and theme preferences are stored only in the current browser's `localStorage`. JSON export/import provides a manual backup, but data is not synchronized between browsers or devices, and clearing browser data removes it. A future version can add authenticated accounts and a database-backed API.

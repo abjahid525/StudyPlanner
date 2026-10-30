@@ -1,9 +1,13 @@
 const STORAGE_KEY = 'study-planner-tasks-v1';
+const THEME_KEY = 'study-planner-theme-v1';
+const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
 
 const state = {
   tasks: loadTasks(),
   filter: 'all',
-  search: ''
+  search: '',
+  subject: 'all',
+  sort: 'created'
 };
 
 const elements = {
@@ -13,6 +17,7 @@ const elements = {
   description: document.getElementById('task-description'),
   dueDate: document.getElementById('task-due-date'),
   priority: document.getElementById('task-priority'),
+  subject: document.getElementById('task-subject'),
   taskList: document.getElementById('task-list'),
   emptyState: document.getElementById('empty-state'),
   emptyTitle: document.getElementById('empty-title'),
@@ -21,7 +26,11 @@ const elements = {
   submitLabel: document.getElementById('submit-label'),
   cancelEdit: document.getElementById('cancel-edit'),
   search: document.getElementById('search-input'),
-  toast: document.getElementById('toast')
+  toast: document.getElementById('toast'),
+  subjectFilter: document.getElementById('subject-filter'),
+  sort: document.getElementById('sort-select'),
+  themeToggle: document.getElementById('theme-toggle'),
+  importTasks: document.getElementById('import-tasks')
 };
 
 function loadTasks() {
@@ -36,6 +45,7 @@ function loadTasks() {
         description: typeof task.description === 'string' ? task.description : '',
         dueDate: typeof task.dueDate === 'string' ? task.dueDate : '',
         priority: ['low', 'medium', 'high'].includes(task.priority) ? task.priority : 'medium',
+        subject: typeof task.subject === 'string' ? task.subject : 'general',
         completed: task.completed === true,
         createdAt: typeof task.createdAt === 'string' ? task.createdAt : new Date().toISOString()
       }))
@@ -70,12 +80,22 @@ function isOverdue(task) {
 
 function visibleTasks() {
   const query = state.search.trim().toLowerCase();
-  return state.tasks.filter((task) => {
+  const tasks = state.tasks.filter((task) => {
     const matchesFilter = state.filter === 'all'
       || (state.filter === 'active' && !task.completed)
       || (state.filter === 'completed' && task.completed);
     const matchesSearch = !query || `${task.title} ${task.description}`.toLowerCase().includes(query);
-    return matchesFilter && matchesSearch;
+    const matchesSubject = state.subject === 'all' || task.subject === state.subject;
+    return matchesFilter && matchesSearch && matchesSubject;
+  });
+  return tasks.sort((a, b) => {
+    if (state.sort === 'priority') return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
+    if (state.sort === 'due') {
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return a.dueDate.localeCompare(b.dueDate);
+    }
+    return new Date(b.createdAt) - new Date(a.createdAt);
   });
 }
 
@@ -83,11 +103,16 @@ function render() {
   const completed = state.tasks.filter((task) => task.completed).length;
   const total = state.tasks.length;
   const progress = total ? Math.round((completed / total) * 100) : 0;
+  const today = new Date().toISOString().slice(0, 10);
+  const todayTasks = state.tasks.filter((task) => task.dueDate === today && !task.completed).length;
+  const overdueTasks = state.tasks.filter(isOverdue).length;
   document.getElementById('total-count').textContent = total;
   document.getElementById('completed-count').textContent = completed;
   document.getElementById('remaining-count').textContent = total - completed;
   document.getElementById('progress-value').textContent = `${progress}%`;
   document.getElementById('progress-bar').style.width = `${progress}%`;
+  document.getElementById('today-count').textContent = todayTasks;
+  document.getElementById('overdue-count').textContent = overdueTasks;
   document.getElementById('all-count').textContent = total;
   document.getElementById('active-count').textContent = total - completed;
   document.getElementById('done-count').textContent = completed;
@@ -131,9 +156,11 @@ function renderTask(task) {
   const priority = document.createElement('span');
   priority.className = `priority priority-${task.priority}`;
   priority.textContent = task.priority;
+  const subject = document.createElement('span');
+  subject.textContent = task.subject;
   const due = document.createElement('span');
   due.textContent = isOverdue(task) ? `${formatDueDate(task.dueDate)} · overdue` : formatDueDate(task.dueDate);
-  meta.append(priority, due);
+  meta.append(priority, subject, due);
   main.append(meta);
 
   const actions = document.createElement('div');
@@ -147,6 +174,7 @@ function resetForm() {
   elements.form.reset();
   elements.taskId.value = '';
   elements.priority.value = 'medium';
+  elements.subject.value = 'general';
   elements.formHeading.textContent = 'Add a new task';
   elements.submitLabel.textContent = 'Add task';
   elements.cancelEdit.classList.add('hidden');
@@ -158,6 +186,7 @@ function editTask(task) {
   elements.description.value = task.description;
   elements.dueDate.value = task.dueDate;
   elements.priority.value = task.priority;
+  elements.subject.value = task.subject;
   elements.formHeading.textContent = 'Edit task';
   elements.submitLabel.textContent = 'Save changes';
   elements.cancelEdit.classList.remove('hidden');
@@ -181,10 +210,10 @@ elements.form.addEventListener('submit', (event) => {
   const existingId = elements.taskId.value;
   if (existingId) {
     const task = state.tasks.find((item) => item.id === existingId);
-    Object.assign(task, { title, description: elements.description.value.trim(), dueDate: elements.dueDate.value, priority: elements.priority.value });
+    Object.assign(task, { title, description: elements.description.value.trim(), dueDate: elements.dueDate.value, priority: elements.priority.value, subject: elements.subject.value });
     showToast('Task updated');
   } else {
-    state.tasks.unshift({ id: createId(), title, description: elements.description.value.trim(), dueDate: elements.dueDate.value, priority: elements.priority.value, completed: false, createdAt: new Date().toISOString() });
+    state.tasks.unshift({ id: createId(), title, description: elements.description.value.trim(), dueDate: elements.dueDate.value, priority: elements.priority.value, subject: elements.subject.value, completed: false, createdAt: new Date().toISOString() });
     showToast('Task added');
   }
   saveTasks();
@@ -194,6 +223,8 @@ elements.form.addEventListener('submit', (event) => {
 
 elements.cancelEdit.addEventListener('click', resetForm);
 elements.search.addEventListener('input', (event) => { state.search = event.target.value; render(); });
+elements.subjectFilter.addEventListener('change', (event) => { state.subject = event.target.value; render(); });
+elements.sort.addEventListener('change', (event) => { state.sort = event.target.value; render(); });
 document.querySelectorAll('.filter-tab').forEach((button) => {
   button.addEventListener('click', () => {
     state.filter = button.dataset.filter;
@@ -232,4 +263,45 @@ elements.taskList.addEventListener('click', (event) => {
 });
 
 document.getElementById('today-date').textContent = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
+
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem(THEME_KEY, theme);
+  elements.themeToggle.textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+  elements.themeToggle.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`);
+}
+
+elements.themeToggle.addEventListener('click', () => {
+  setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+});
+
+document.getElementById('export-tasks').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state.tasks, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `study-planner-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup exported');
+});
+
+elements.importTasks.addEventListener('change', async (event) => {
+  const [file] = event.target.files;
+  if (!file) return;
+  try {
+    const imported = JSON.parse(await file.text());
+    if (!Array.isArray(imported)) throw new Error('Backup must contain a task list.');
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
+    state.tasks = loadTasks();
+    render();
+    showToast('Backup imported');
+  } catch {
+    showToast('Could not import that backup');
+  } finally {
+    event.target.value = '';
+  }
+});
+
+setTheme(localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light');
 render();
