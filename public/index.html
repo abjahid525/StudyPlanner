@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Plan, track, and complete your study tasks." />
+  <title>Study Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Study Planner home">
+        <span class="brand-mark">SP</span>
+        <span>Study Planner</span>
+      </a>
+      <span class="storage-note"><span class="status-dot"></span>Saved locally</span>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">YOUR FOCUS SPACE</p>
+        <h1>Make progress<br /><span>visible.</span></h1>
+        <p class="hero-copy">Organize today’s study goals and keep your momentum moving forward.</p>
+      </div>
+      <div class="date-card">
+        <span id="today-label">Today</span>
+        <strong id="today-date"></strong>
+      </div>
+    </section>
+
+    <section class="stats-grid" aria-label="Study progress">
+      <article class="stat-card">
+        <span class="stat-label">Total tasks</span>
+        <strong id="total-count">0</strong>
+      </article>
+      <article class="stat-card accent-card">
+        <span class="stat-label">Completed</span>
+        <strong id="completed-count">0</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Remaining</span>
+        <strong id="remaining-count">0</strong>
+      </article>
+      <article class="stat-card progress-card">
+        <span class="stat-label">Progress</span>
+        <strong id="progress-value">0%</strong>
+        <div class="progress-track"><span id="progress-bar"></span></div>
+      </article>
+    </section>
+
+    <section class="workspace">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">PLAN YOUR DAY</p>
+          <h2 id="form-heading">Add a new task</h2>
+        </div>
+        <button id="cancel-edit" class="text-button hidden" type="button">Cancel edit</button>
+      </div>
+
+      <form id="task-form" class="task-form">
+        <input id="task-id" type="hidden" />
+        <label class="field field-title">
+          <span>Task title</span>
+          <input id="task-title" type="text" maxlength="100" placeholder="e.g. Review JavaScript promises" required />
+        </label>
+        <label class="field field-description">
+          <span>Note <em>optional</em></span>
+          <input id="task-description" type="text" maxlength="180" placeholder="Add a little context..." />
+        </label>
+        <label class="field">
+          <span>Due date</span>
+          <input id="task-due-date" type="date" />
+        </label>
+        <label class="field">
+          <span>Priority</span>
+          <select id="task-priority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+        <button class="primary-button" type="submit"><span id="submit-label">Add task</span><span aria-hidden="true">+</span></button>
+      </form>
+
+      <div class="list-toolbar">
+        <div class="filter-tabs" role="tablist" aria-label="Task status filters">
+          <button class="filter-tab active" data-filter="all" type="button" role="tab" aria-selected="true">All <span id="all-count">0</span></button>
+          <button class="filter-tab" data-filter="active" type="button" role="tab" aria-selected="false">Active <span id="active-count">0</span></button>
+          <button class="filter-tab" data-filter="completed" type="button" role="tab" aria-selected="false">Completed <span id="done-count">0</span></button>
+        </div>
+        <label class="search-box">
+          <span aria-hidden="true">⌕</span>
+          <input id="search-input" type="search" placeholder="Search tasks..." aria-label="Search tasks" />
+        </label>
+      </div>
+
+      <div id="task-list" class="task-list" aria-live="polite"></div>
+      <div id="empty-state" class="empty-state hidden">
+        <div class="empty-icon">✦</div>
+        <h3 id="empty-title">No tasks yet</h3>
+        <p id="empty-copy">Add your first study task to get started.</p>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>

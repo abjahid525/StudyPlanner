@@ -1,0 +1,18 @@
+{
+  "name": "study-planner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A focused study planning workspace",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node tests/health-check.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
