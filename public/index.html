@@ -61,6 +61,10 @@
         <span class="stat-label">Overdue</span>
         <strong id="overdue-count">0</strong>
       </article>
+      <article class="stat-card">
+        <span class="stat-label">Study time</span>
+        <strong id="study-time">0m</strong>
+      </article>
     </section>
 
     <section class="workspace">
@@ -105,6 +109,16 @@
             <option value="other">Other</option>
           </select>
         </label>
+        <label class="field">
+          <span>Duration</span>
+          <select id="task-duration">
+            <option value="30">30 min</option>
+            <option value="60" selected>1 hour</option>
+            <option value="90">1.5 hours</option>
+            <option value="120">2 hours</option>
+            <option value="180">3 hours</option>
+          </select>
+        </label>
         <button class="primary-button" type="submit"><span id="submit-label">Add task</span><span aria-hidden="true">+</span></button>
       </form>
 
@@ -128,6 +142,11 @@
             <option value="created">Newest first</option>
             <option value="due">Due date</option>
             <option value="priority">Priority</option>
+          </select>
+          <select id="date-filter" class="toolbar-select" aria-label="Filter by date">
+            <option value="all">All dates</option>
+            <option value="today">Today</option>
+            <option value="upcoming">Upcoming</option>
           </select>
         </div>
         <label class="search-box">

@@ -11,11 +11,14 @@ Study Planner is a focused task management app for organizing study goals. The c
 - Filter all, active, and completed tasks
 - Assign a due date and priority
 - Organize tasks by subject
+- Set estimated study duration for each task
 - Sort by creation date, due date, or priority
+- Filter tasks by today or upcoming due dates
 - Highlight overdue active tasks
 - Confirm destructive deletions
 - Progress summary with completion percentage
 - Track today's and overdue task counts
+- Track total planned study time
 - Export and import JSON backups
 - Switch between light and dark themes
 - Browser-local persistence with `localStorage`

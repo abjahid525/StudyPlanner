@@ -7,7 +7,8 @@ const state = {
   filter: 'all',
   search: '',
   subject: 'all',
-  sort: 'created'
+  sort: 'created',
+  dateFilter: 'all'
 };
 
 const elements = {
@@ -18,6 +19,7 @@ const elements = {
   dueDate: document.getElementById('task-due-date'),
   priority: document.getElementById('task-priority'),
   subject: document.getElementById('task-subject'),
+  duration: document.getElementById('task-duration'),
   taskList: document.getElementById('task-list'),
   emptyState: document.getElementById('empty-state'),
   emptyTitle: document.getElementById('empty-title'),
@@ -29,6 +31,7 @@ const elements = {
   toast: document.getElementById('toast'),
   subjectFilter: document.getElementById('subject-filter'),
   sort: document.getElementById('sort-select'),
+  dateFilter: document.getElementById('date-filter'),
   themeToggle: document.getElementById('theme-toggle'),
   importTasks: document.getElementById('import-tasks')
 };
@@ -46,6 +49,7 @@ function loadTasks() {
         dueDate: typeof task.dueDate === 'string' ? task.dueDate : '',
         priority: ['low', 'medium', 'high'].includes(task.priority) ? task.priority : 'medium',
         subject: typeof task.subject === 'string' ? task.subject : 'general',
+        duration: Number.isFinite(Number(task.duration)) ? Number(task.duration) : 60,
         completed: task.completed === true,
         createdAt: typeof task.createdAt === 'string' ? task.createdAt : new Date().toISOString()
       }))
@@ -71,6 +75,13 @@ function formatDueDate(value) {
     : new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(date);
 }
 
+function formatDuration(minutes) {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
+}
+
 function isOverdue(task) {
   if (!task.dueDate || task.completed) return false;
   const today = new Date();
@@ -80,13 +91,17 @@ function isOverdue(task) {
 
 function visibleTasks() {
   const query = state.search.trim().toLowerCase();
+  const today = new Date().toISOString().slice(0, 10);
   const tasks = state.tasks.filter((task) => {
     const matchesFilter = state.filter === 'all'
       || (state.filter === 'active' && !task.completed)
       || (state.filter === 'completed' && task.completed);
     const matchesSearch = !query || `${task.title} ${task.description}`.toLowerCase().includes(query);
     const matchesSubject = state.subject === 'all' || task.subject === state.subject;
-    return matchesFilter && matchesSearch && matchesSubject;
+    const matchesDate = state.dateFilter === 'all'
+      || (state.dateFilter === 'today' && task.dueDate === today)
+      || (state.dateFilter === 'upcoming' && task.dueDate > today);
+    return matchesFilter && matchesSearch && matchesSubject && matchesDate;
   });
   return tasks.sort((a, b) => {
     if (state.sort === 'priority') return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
@@ -106,6 +121,7 @@ function render() {
   const today = new Date().toISOString().slice(0, 10);
   const todayTasks = state.tasks.filter((task) => task.dueDate === today && !task.completed).length;
   const overdueTasks = state.tasks.filter(isOverdue).length;
+  const studyMinutes = state.tasks.reduce((totalMinutes, task) => totalMinutes + task.duration, 0);
   document.getElementById('total-count').textContent = total;
   document.getElementById('completed-count').textContent = completed;
   document.getElementById('remaining-count').textContent = total - completed;
@@ -113,6 +129,9 @@ function render() {
   document.getElementById('progress-bar').style.width = `${progress}%`;
   document.getElementById('today-count').textContent = todayTasks;
   document.getElementById('overdue-count').textContent = overdueTasks;
+  document.getElementById('study-time').textContent = studyMinutes >= 60
+    ? `${Math.floor(studyMinutes / 60)}h ${studyMinutes % 60 ? `${studyMinutes % 60}m` : ''}`.trim()
+    : `${studyMinutes}m`;
   document.getElementById('all-count').textContent = total;
   document.getElementById('active-count').textContent = total - completed;
   document.getElementById('done-count').textContent = completed;
@@ -160,7 +179,9 @@ function renderTask(task) {
   subject.textContent = task.subject;
   const due = document.createElement('span');
   due.textContent = isOverdue(task) ? `${formatDueDate(task.dueDate)} · overdue` : formatDueDate(task.dueDate);
-  meta.append(priority, subject, due);
+  const duration = document.createElement('span');
+  duration.textContent = formatDuration(task.duration);
+  meta.append(priority, subject, due, duration);
   main.append(meta);
 
   const actions = document.createElement('div');
@@ -175,6 +196,7 @@ function resetForm() {
   elements.taskId.value = '';
   elements.priority.value = 'medium';
   elements.subject.value = 'general';
+  elements.duration.value = '60';
   elements.formHeading.textContent = 'Add a new task';
   elements.submitLabel.textContent = 'Add task';
   elements.cancelEdit.classList.add('hidden');
@@ -187,6 +209,7 @@ function editTask(task) {
   elements.dueDate.value = task.dueDate;
   elements.priority.value = task.priority;
   elements.subject.value = task.subject;
+  elements.duration.value = String(task.duration);
   elements.formHeading.textContent = 'Edit task';
   elements.submitLabel.textContent = 'Save changes';
   elements.cancelEdit.classList.remove('hidden');
@@ -210,10 +233,10 @@ elements.form.addEventListener('submit', (event) => {
   const existingId = elements.taskId.value;
   if (existingId) {
     const task = state.tasks.find((item) => item.id === existingId);
-    Object.assign(task, { title, description: elements.description.value.trim(), dueDate: elements.dueDate.value, priority: elements.priority.value, subject: elements.subject.value });
+    Object.assign(task, { title, description: elements.description.value.trim(), dueDate: elements.dueDate.value, priority: elements.priority.value, subject: elements.subject.value, duration: Number(elements.duration.value) });
     showToast('Task updated');
   } else {
-    state.tasks.unshift({ id: createId(), title, description: elements.description.value.trim(), dueDate: elements.dueDate.value, priority: elements.priority.value, subject: elements.subject.value, completed: false, createdAt: new Date().toISOString() });
+    state.tasks.unshift({ id: createId(), title, description: elements.description.value.trim(), dueDate: elements.dueDate.value, priority: elements.priority.value, subject: elements.subject.value, duration: Number(elements.duration.value), completed: false, createdAt: new Date().toISOString() });
     showToast('Task added');
   }
   saveTasks();
@@ -225,6 +248,7 @@ elements.cancelEdit.addEventListener('click', resetForm);
 elements.search.addEventListener('input', (event) => { state.search = event.target.value; render(); });
 elements.subjectFilter.addEventListener('change', (event) => { state.subject = event.target.value; render(); });
 elements.sort.addEventListener('change', (event) => { state.sort = event.target.value; render(); });
+elements.dateFilter.addEventListener('change', (event) => { state.dateFilter = event.target.value; render(); });
 document.querySelectorAll('.filter-tab').forEach((button) => {
   button.addEventListener('click', () => {
     state.filter = button.dataset.filter;
